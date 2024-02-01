@@ -48,54 +48,73 @@
                 <tbody class="table-striped" id="order-table-body">
                 </tbody>
             </table>
- 
-            <label>Total Harga : <strong id="grand-total">0</strong></label>
-            <a href="" class="btn btn-md btn-success px-3 py-1" id="bayar">
-                <i class="fa fa-coins"></i> Bayar
-            </a>
-        </div>
-    </div>
-</div>
 
-<div class="modal fade" id="bayar">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Detail</h4>
-            </div>
-            <div class="modal-body">
-                <form class="forms-sample" id="store_data" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label for="NamaProduk">Nama Produk</label>
-                        <input type="text" class="form-control" name="NamaProduk" placeholder="Nama Produk" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="Harga">Harga</label>
-                        <input type="text" class="form-control" name="Harga" placeholder="Harga" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="Stok">Stok</label>
-                        <input type="text" class="form-control" name="Stok" placeholder="Stok" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="Gambar">Gambar</label>
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" name="Gambar" id="Gambar">
-                            <label class="custom-file-label" for="Gambar">Choose file</label>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary me-2" id="btn-store">Submit</button>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-dismiss="modal">
-                    <i class="mdi mdi-window-close btn-icon-prepend"> Close</i>
+            <div class="row d-flex">
+                <input type="text" id="grand-total" value="0" readonly class="form-control col-md-3 ml-3 mr-3" name="total">
+                <button class="btn btn-md btn-success px-3 py-1" id="bayar" data-toggle="modal" data-target="#modal-bayar">
+                    <i class="fa fa-coins"></i> Bayar
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modal-bayar">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Pembayaran</h4>
+            </div>
+            <div class="modal-body">
+                <!-- Isi modal pembayaran disini -->
+                <form id="form-pembayaran">
+                    <!-- Form pembayaran -->
+                    <div class="form-group">
+                        <label for="tgl">Tanggal</label>
+                        <input type="date" name="tglpenjualan" id="tglpenjualan" class="form-control" value="<?= date('Y-m-d') ?>" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="pelanggan">Pelanggan:</label>
+                        <select class="form-control" id="pelanggan" name="pelanggan">
+                            <?php foreach($pelanggan as $p) : ?>
+                                <option value="<?= $p['PelangganID'] ?>"><?= $p['NamaPelanggan'] ?></option>
+                            <?php endforeach ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="produkTable">Produk yang Dipilih:</label>
+                        <table class="table" id="produkTable">
+                            <thead>
+                                <tr>
+                                    <th>Nama Produk</th>
+                                    <th>Qty</th>
+                                    <th>Harga</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="produkTableBody">
+                                <!-- Data produk akan ditampilkan di sini -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-group d-flex">
+                        <label for="modal-total-harga">Total Harga:</label>
+                        <input type="text" class="form-control col-md-4 ml-4" id="modal-total-harga" name="total" readonly>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="prosesPembayaran">
+                    <i class="fa fa-money-check"></i> Proses Pembayaran
+                </button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">
+                    <i class="mdi mdi-close"></i> Batal
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
@@ -121,11 +140,11 @@
             } else {
                 // Jika menu belum ada, tambahkan baris baru
                 var newRow = '<tr id="1">' +
-                    '<td class="col-md-6">' + menu + '</td>' +
+                    '<td class="col-md-6" name="nama_produk">' + menu + '</td>' +
                     '<td class="col-md-1"><button id="btn-kurang" class="btn btn-sm btn-danger">-</button></td>' +
-                    '<td class="col-md-1 qty">1</td>' +
-                    '<td class="col-md-3 harga">' + harga + '</td>' +
-                    '<td class="col-md-2 font-weight-bold total">' + harga + '</td>' +
+                    '<td class="col-md-1 qty" name="qty">1</td>' +
+                    '<td class="col-md-3 harga" name="harga">' + harga + '</td>' +
+                    '<td class="col-md-2 font-weight-bold total" name="subtotal">' + harga + '</td>' +
                     '</tr>';
             }
 
@@ -178,8 +197,50 @@
             });
 
             // Update grand total pada elemen dengan ID "grand-total"
-            $('#grand-total').text('Rp ' + grandTotal.toLocaleString());
+            $('#grand-total').val('Rp ' + grandTotal.toLocaleString());
         }
+
+        // open modal pembayaran
+        $('#bayar').on('click', function () {
+            hitungGrandTotal(); // Pastikan total harga terbaru
+            var grandTotal = $('#grand-total').val();
+
+            // Update nilai total pada modal pembayaran
+            $('#modal-total-harga').val(grandTotal.toLocaleString('id-ID'));
+
+            // Ambil data produk dari tabel pembayaran
+            var produkData = [];
+            $('#order-table tbody tr').each(function () {
+                var namaProduk = $(this).find('[name="nama_produk"]').text();
+                var qty = $(this).find('[name="qty"]').text();
+                var harga = $(this).find('[name="harga"]').text();
+                var subtotal = $(this).find('[name="subtotal"]').text();
+
+                produkData.push({
+                    namaProduk: namaProduk,
+                    qty: qty,
+                    harga: harga,
+                    subtotal: subtotal
+                });
+            });
+
+            // Kosongkan tabel produk pada modal
+            $('#produkTableBody').empty();
+
+            // Isi tabel produk pada modal dengan data produk
+            $.each(produkData, function (index, produk) {
+                var newRow = '<tr>' +
+                    '<td>' + produk.namaProduk + '</td>' +
+                    '<td>' + produk.qty + '</td>' +
+                    '<td>' + 'Rp ' + produk.harga.toLocaleString('id-ID') + '</td>' +
+                    '<td>' + 'Rp ' + produk.subtotal.toLocaleString('id-ID') + '</td>' +
+                    '</tr>';
+                $('#produkTableBody').append(newRow);
+            });
+
+            // Tampilkan modal pembayaran
+            $('#modal-bayar').modal('show');
+        });
     })    
 </script>
 
