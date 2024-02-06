@@ -40,4 +40,5 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     // transaksi
     $routes->get('transaksi', 'TransaksiController::index');
     $routes->post('transaksi/store', 'TransaksiController::store');
+    $routes->get('transaksi/store', 'TransaksiController::store');
 });

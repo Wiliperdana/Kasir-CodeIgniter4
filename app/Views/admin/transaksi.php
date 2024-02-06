@@ -16,7 +16,7 @@
               <?php endif; ?>
               <div class="col-md-4 mb-3">
                 <a href="#" style="text-decoration: none;" class="text-dark">
-                  <div class="card bg-white h-100" data-menu="<?= $produk['NamaProduk'] ?>" data-harga="<?= $produk['Harga'] ?>">
+                  <div class="card bg-white h-100" data-menu="<?= $produk['NamaProduk'] ?>" data-harga="<?= $produk['Harga'] ?>" data-id="<?= $produk['ProdukID'] ?>">
                     <div class="card-body d-flex flex-column">
                       <img src="images/<?= $produk['Gambar'] ?>" alt="" class="w-100">
                       <p class="small flex-grow-1"><?= $produk['NamaProduk'] ?></p>
@@ -99,7 +99,7 @@
                     </div>
                     <div class="form-group d-flex">
                         <label for="modal-total-harga">Total Harga:</label>
-                        <input type="text" class="form-control col-md-4 ml-4" id="modal-total-harga" name="total" readonly>
+                        <input type="text" class="form-control col-md-4 ml-4" id="modal-total-harga" name="total-harga" readonly>
                     </div>
                 </form>
             </div>
@@ -120,15 +120,19 @@
 
 <script>
     $(document).ready(function () {
+        var hargaformat = 0;
+        var detailPenjualan = [];
+
         // Tambahkan menu ke dalam tabel
         $('.card').on('click', function () {
             var menu = $(this).data('menu');
             var harga = $(this).data('harga');
-            tambahkanMenu(menu, harga);
+            var id = $(this).data('id');
+            tambahkanMenu(menu, harga, id);
         });
 
         // Fungsi untuk menambahkan menu ke dalam tabel
-        function tambahkanMenu(menu, harga) {
+        function tambahkanMenu(menu, harga, id) {
             // Cek apakah menu sudah ada di tabel
             var existingRow = $('#order-table tbody tr:contains("' + menu + '")');
 
@@ -139,7 +143,7 @@
                 qtyCell.text(qty);
             } else {
                 // Jika menu belum ada, tambahkan baris baru
-                var newRow = '<tr id="1">' +
+                var newRow = '<tr>' +
                     '<td class="col-md-6" name="nama_produk">' + menu + '</td>' +
                     '<td class="col-md-1"><button id="btn-kurang" class="btn btn-sm btn-danger">-</button></td>' +
                     '<td class="col-md-1 qty" name="qty">1</td>' +
@@ -148,10 +152,28 @@
                     '</tr>';
             }
 
-            $('#order-table tbody').append(newRow);
-
+            $('#order-table tbody').append(newRow);   
+            
             // Hitung total harga
             hitungTotalHarga();
+
+            // Menambahkan produk ke dalam array
+            var existingItemIndex = detailPenjualan.findIndex(item => item.produkID === id);
+
+            if (existingItemIndex !== -1) {
+                // Jika ProdukID sudah ada, tambahkan qty sebanyak 1
+                detailPenjualan[existingItemIndex].qty++;
+                detailPenjualan[existingItemIndex].subtotal = qty * harga;
+            } else {
+                // Jika ProdukID belum ada, tambahkan indeks array baru
+                detailPenjualan.push({
+                    produkID: id,
+                    qty: 1,
+                    subtotal: parseInt(harga)
+                });
+            }
+
+            return detailPenjualan;
         }
 
         // Fungsi untuk menghitung total harga per menu
@@ -198,6 +220,7 @@
 
             // Update grand total pada elemen dengan ID "grand-total"
             $('#grand-total').val('Rp ' + grandTotal.toLocaleString());
+            numberformat = grandTotal
         }
 
         // open modal pembayaran
@@ -240,6 +263,46 @@
 
             // Tampilkan modal pembayaran
             $('#modal-bayar').modal('show');
+        });
+
+        // Tambah transaksi
+        $('#prosesPembayaran').on('click', function(e) {
+            e.preventDefault();
+
+            var tglpenjualan = $('[name="tglpenjualan"]').val();
+            var total = numberformat;
+            var pelanggan = $('[name="pelanggan"]').val();
+
+            if (tglpenjualan === '' || total === '' || pelanggan === '') {
+                // Notifikasi Required
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Semua kolom harus diisi.',
+                });
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: 'transaksi/store',
+                data: {tglpenjualan : tglpenjualan, total : total, pelanggan : pelanggan, detailPenjualan : detailPenjualan},
+                success: function(hasil) {
+                    $('#modal-bayar').modal('hide');
+                    $('[name="tglpenjualan"]').val('');
+                    $('[name="total-harga"]').val('');
+                    $('[name="pelanggan"]').val('');
+
+                    // Notifikasi Sukses
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sukses!',
+                        text: 'Data berhasil disimpan.',
+                    });
+
+                    location.reload();
+                }
+            });
         });
     })    
 </script>
