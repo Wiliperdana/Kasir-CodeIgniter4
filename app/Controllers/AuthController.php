@@ -60,4 +60,8 @@ class AuthController extends BaseController
 
         return redirect()->to(base_url());
     }
+
+    public function unauthorized() {
+        return view('404');
+    }
 }

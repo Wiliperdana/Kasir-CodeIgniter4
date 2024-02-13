@@ -10,7 +10,10 @@ $routes->get('/', 'AuthController::index');
 $routes->post('login', 'AuthController::login');
 $routes->get('logout', 'AuthController::logout');
 
-$routes->group('', ['filter' => 'auth'], function($routes) {
+// 404 Not Found
+$routes->get('404', 'AuthController::unauthorized');
+
+$routes->group('', ['filter' => 'authAdmin'], function($routes) {
     $routes->get('/dashboard', 'MainController::dashboard');
 
     // produk
@@ -21,7 +24,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->post('produk/update', 'ProdukController::update');
     $routes->post('produk/delete', 'ProdukController::delete');
 
-    // transaksi
+    // user
     $routes->get('user', 'UserController::index');
     $routes->post('user/store', 'UserController::store');
     $routes->get('user/getdata', 'UserController::get_data');
@@ -36,7 +39,9 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->get('pelanggan/edit', 'PelangganController::edit');
     $routes->post('pelanggan/update', 'PelangganController::update');
     $routes->post('pelanggan/delete', 'PelangganController::delete');
+});
 
+$routes->group('', ['filter' => 'auth'], function($routes) {
     // transaksi
     $routes->get('transaksi', 'TransaksiController::index');
     $routes->post('transaksi/store', 'TransaksiController::store');
